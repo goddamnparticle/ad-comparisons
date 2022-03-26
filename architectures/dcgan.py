@@ -40,7 +40,7 @@ class Discriminator(nn.Module):
         channels: Color channels for Generator output (RGB: 3, B&W: 1).
         img_size: Training dataset image size.
     """
-    def __init__(self, channels, img_size):
+    def __init__(self, channels=3, img_size=32):
         super().__init__()
         def discriminator_block(in_filters, out_filters, bn=True):
             block = [
