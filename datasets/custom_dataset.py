@@ -1,28 +1,42 @@
+from torchvision import transforms
+from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
+from pytorch_lightning import LightningDataModule
 
 
-class CustomDS(ImageFolder):
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class CustomDS(LightningDataModule):
+    def __init__(
+        self,
+        data_dir="data/customds/train_frames",
+        batch_size=64,
+        num_workers=1,
+        img_size=64,
+        shuffle=True,
+    ):
+        super().__init__()
+        self.shuffle = shuffle
+        self.data = data_dir
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize(img_size),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        )
 
-    def __getitem__(self, index):
-        """
-        Args:
-            index (int): Index
+    def prepare_data(self):
+        # download
+        ImageFolder(self.data, transform=self.transform)
 
-        Returns:
-            tuple: (sample, target) where target is class_index of the target class.
-        """
-        path, target = self.samples[index]
-        sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-        return sample, target
+    def setup(self, stage=None):
+        self.dataset_train = ImageFolder(self.data, transform=self.transform)
 
-    def __len__(self):
-        return len(self.samples)
-
-
+    def train_dataloader(self):
+        return DataLoader(
+            self.dataset_train,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=self.shuffle,
+        )
